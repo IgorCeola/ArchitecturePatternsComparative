@@ -1,0 +1,5 @@
+-keep class * { *; }
+-dontwarn androidx.tracing.**
+-keep class androidx.tracing.** { *; }
+-keep class androidx.benchmark.** { *; }
+-keep class androidx.profileinstaller.** { *; }

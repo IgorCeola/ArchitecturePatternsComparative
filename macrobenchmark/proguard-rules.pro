@@ -1,0 +1,8 @@
+-keep class * { *; }
+-dontobfuscate
+-dontoptimize
+-ignorewarnings
+-dontwarn javax.lang.model.element.Modifier
+-dontwarn androidx.tracing.**
+-keep class androidx.tracing.** { *; }
+-keep class androidx.benchmark.** { *; }
