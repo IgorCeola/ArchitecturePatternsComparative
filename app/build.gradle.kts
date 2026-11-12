@@ -4,24 +4,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.architecturepatternscomparative"
-    compileSdk {
-        version = release(37)
-    }
-
-    defaultConfig {
-        applicationId = "com.example.architecturepatternscomparative"
-        minSdk = 29
-        targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -31,22 +17,13 @@ android {
             initWith(buildTypes.getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
-            isDebuggable = false
-        }
-        create("benchmark1") {
-            initWith(buildTypes.getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-            isDebuggable = false
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        compose = true
-    }
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+    metricsDestination = layout.buildDirectory.dir("compose_compiler")
 }
 
 dependencies {
@@ -69,4 +46,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("androidx.tracing:tracing-ktx:1.2.0")
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+//    implementation(libs.androidx.compose.material.icons.core)
+//    implementation(libs.androidx.tracing.ktx)
 }

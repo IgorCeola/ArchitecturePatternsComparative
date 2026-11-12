@@ -1,35 +1,49 @@
 package com.example.architecturepatternscomparative.mvi
 
+import androidx.compose.ui.util.trace
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.architecturepatternscomparative.core.data.FeedDataSource
+import com.example.architecturepatternscomparative.core.data.STATE_UPDATE_SECTION
+import com.example.architecturepatternscomparative.core.data.Scenario
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.architecturepatternscomparative.core.LoadGenerator
 
-class FeedViewModelMvi : ViewModel() {
-
-    private val loadGenerator = LoadGenerator()
-    private val reducer = FeedReducer()
-
-    private val _state = MutableStateFlow(FeedState())
-    val state: StateFlow<FeedState> = _state.asStateFlow()
+class FeedViewModelMvi(private val scenario: Scenario) : ViewModel() {
+    private val intents = Channel<FeedIntent>(Channel.UNLIMITED)
+    private val _state = MutableStateFlow(FeedUiState())
+    val state: StateFlow<FeedUiState> = _state.asStateFlow()
 
     init {
-        startCollectingData()
-    }
-
-    private fun startCollectingData() {
-        viewModelScope.launch {
-            loadGenerator.startHeavyEmission()
-                .collect { incomingItems ->
-                    dispatch(FeedIntent.LoadItems(incomingItems))
+        viewModelScope.launch(Dispatchers.Default) {
+            for (intent in intents) {
+                trace(STATE_UPDATE_SECTION) {
+                    _state.value = FeedReducer.reduce(_state.value, intent)
                 }
+            }
+        }
+        // Produtores: carga inicial e atualizações periódicas do cenário.
+        viewModelScope.launch(Dispatchers.Default) {
+            onIntent(FeedIntent.ItemsLoaded(FeedDataSource.initialItems()))
+            when (scenario) {
+                Scenario.S2_ITEM_UPDATES ->
+                    FeedDataSource.ticks(FeedDataSource.ITEM_TICK_MS)
+                        .collect { onIntent(FeedIntent.ItemTick(it)) }
+
+                Scenario.S4_AUX_STATE ->
+                    FeedDataSource.ticks(FeedDataSource.HEADER_TICK_MS)
+                        .collect { onIntent(FeedIntent.HeaderTick(it)) }
+
+                else -> Unit
+            }
         }
     }
 
-    private fun dispatch(intent: FeedIntent) {
-        _state.value = reducer.reduce(_state.value, intent)
+    fun onIntent(intent: FeedIntent) {
+        intents.trySend(intent)
     }
 }
