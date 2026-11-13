@@ -1,4 +1,4 @@
-"""Análise do experimento MVVM vs MVI.
+"""Análise do experimento MVVM vs MVI."""
 
 import json
 import re
