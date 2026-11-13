@@ -33,8 +33,7 @@ class FeedBenchmark {
     @get:Rule
     val rule = MacrobenchmarkRule()
     private val args = InstrumentationRegistry.getArguments()
-    private val architecture = requireNotNull(args.getString("architecture"))
-    {
+    private val architecture = requireNotNull(args.getString("architecture")) {
         "Argumento 'architecture' ausente (MVVM ou MVI)"
     }
     private val scenario = requireNotNull(args.getString("scenario")) {
@@ -53,16 +52,13 @@ class FeedBenchmark {
             )
         ),
         compilationMode = CompilationMode.Full(),
-        startupMode = StartupMode.COLD,
         iterations = iterations,
         setupBlock = {
+            killProcess()
             pressHome()
             startActivityAndWait(
                 Intent().apply {
-                    setClassName(
-                        TARGET_PACKAGE,
-                        "$TARGET_PACKAGE.MainActivity"
-                    )
+                    setClassName(TARGET_PACKAGE, "$TARGET_PACKAGE.MainActivity")
                     putExtra("ARCHITECTURE", architecture)
                     putExtra("SCENARIO", scenario)
                 }
@@ -92,13 +88,11 @@ private fun flingDown(list: UiObject2) {
     SystemClock.sleep(PAUSE_AFTER_FLING_MS)
 }
 
-/** Busca os botões a cada toque: a recomposição pode invalidar referências
-antigas. */
 private fun MacrobenchmarkScope.tapVisibleFavorites(count: Int) {
     repeat(count) { index ->
         val buttons = device.findObjects(By.res("favorite_button"))
         val button = requireNotNull(buttons.getOrNull(index)) {
-            "Botão de favorito $index não visível (encontrados:${buttons.size})"
+            "Botão de favorito $index não visível (encontrados: ${buttons.size})"
         }
         button.click()
         SystemClock.sleep(PAUSE_AFTER_TAP_MS)

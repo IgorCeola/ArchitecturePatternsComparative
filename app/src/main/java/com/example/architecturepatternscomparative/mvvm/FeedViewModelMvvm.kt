@@ -30,7 +30,7 @@ class FeedViewModelMvvm(private val scenario: Scenario) : ViewModel() {
         viewModelScope.launch(Dispatchers.Default) {
             val initial = FeedDataSource.initialItems()
             trace(STATE_UPDATE_SECTION) { _items.value = initial }
- 
+
             when (scenario) {
                 Scenario.S2_ITEM_UPDATES ->
                     FeedDataSource.ticks(FeedDataSource.ITEM_TICK_MS).collect { tick ->

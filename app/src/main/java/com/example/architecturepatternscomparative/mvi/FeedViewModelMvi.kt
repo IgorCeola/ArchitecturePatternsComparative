@@ -1,8 +1,8 @@
 package com.example.architecturepatternscomparative.mvi
 
-import androidx.compose.ui.util.trace
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.tracing.trace
 import com.example.architecturepatternscomparative.core.data.FeedDataSource
 import com.example.architecturepatternscomparative.core.data.STATE_UPDATE_SECTION
 import com.example.architecturepatternscomparative.core.data.Scenario
@@ -26,7 +26,6 @@ class FeedViewModelMvi(private val scenario: Scenario) : ViewModel() {
                 }
             }
         }
-        // Produtores: carga inicial e atualizações periódicas do cenário.
         viewModelScope.launch(Dispatchers.Default) {
             onIntent(FeedIntent.ItemsLoaded(FeedDataSource.initialItems()))
             when (scenario) {

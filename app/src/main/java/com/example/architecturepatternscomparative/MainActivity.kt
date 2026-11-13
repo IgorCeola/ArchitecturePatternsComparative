@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                     when (architecture) {
                         "MVVM" -> FeedRouteMvvm(scenario)
                         "MVI" -> FeedRouteMvi(scenario)
-                        else -> error("Arquitetura desconhecida:$architecture")
+                        else -> error("Arquitetura desconhecida: $architecture")
                     }
                 }
             }

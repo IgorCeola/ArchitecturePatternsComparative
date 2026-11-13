@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
@@ -34,10 +37,7 @@ fun FeedItemRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title, style =
-                        MaterialTheme.typography.titleSmall
-                )
+                Text(text = item.title, style = MaterialTheme.typography.titleSmall)
                 Text(
                     text = item.body,
                     style = MaterialTheme.typography.bodyMedium,
@@ -55,8 +55,7 @@ fun FeedItemRow(
                 modifier = Modifier.testTag("favorite_button")
             ) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else
-                        Icons.Outlined.FavoriteBorder,
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = "Favoritar"
                 )
             }
