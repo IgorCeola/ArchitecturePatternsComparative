@@ -40,10 +40,24 @@ for block in 1 2 3; do
       echo "$(date -Iseconds) bloco=$block cenario=$scenario arq=$arch temp=$(battery_temp)" | tee -a "$OUT/log.txt"
       rm -rf "$RAW"
 
-      ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
-        -Pandroid.testInstrumentationRunnerArguments.architecture="$arch" \
-        -Pandroid.testInstrumentationRunnerArguments.scenario="$scenario" \
-        -Pandroid.testInstrumentationRunnerArguments.iterations=10
+      ok=0
+      for tentativa in 1 2; do
+        if ./gradlew :macrobenchmark:connectedBenchmarkAndroidTest \
+             -Pandroid.testInstrumentationRunnerArguments.class=com.example.benchmark.FeedBenchmark \
+             -Pandroid.testInstrumentationRunnerArguments.architecture="$arch" \
+             -Pandroid.testInstrumentationRunnerArguments.scenario="$scenario" \
+             -Pandroid.testInstrumentationRunnerArguments.iterations=10; then
+          ok=1; break
+        fi
+        echo "$(date -Iseconds) FALHA tentativa=$tentativa bloco=$block cenario=$scenario arq=$arch" | tee -a "$OUT/log.txt"
+        adb uninstall com.example.architecturepatternscomparative >/dev/null 2>&1 || true
+        sleep 30
+        rm -rf "$RAW"
+      done
+      if (( ok == 0 )); then
+        echo "Falhou duas vezes; interrompendo." | tee -a "$OUT/log.txt"
+        exit 1
+      fi
 
       json=$(find "$RAW" -name '*benchmarkData.json' | head -n 1)
       cp "$json" "$OUT/${scenario}_${arch}_b${block}.json"
