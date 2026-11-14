@@ -24,7 +24,7 @@ battery_temp() {
 }
 
 wait_cool() {
-  while (( $(battery_temp) > 340 )); do  # 34,0 °C
+  while (( $(battery_temp) > 340 )); do
     echo "Bateria a $(battery_temp) décimos de °C; aguardando 60 s..."
     sleep 60
   done
