@@ -1,5 +1,3 @@
-"""Análise do experimento MVVM vs MVI."""
-
 import json
 import re
 import sys
@@ -12,6 +10,7 @@ from scipy import stats
 NAME = re.compile(r"(?P<scenario>S\d_[A-Z_]+)_(?P<arch>MVVM|MVI)_b(?P<block>\d+)\.json$")
 METRICS = ["p90_cpu_ms", "p50_cpu_ms", "jank_ratio", "state_update_ms"]
 PRIMARY = "p90_cpu_ms"
+FRAME_BUDGET_MS = 1000 / 60
 
 
 def load_iterations(root: Path) -> pd.DataFrame:
@@ -30,6 +29,7 @@ def load_iterations(root: Path) -> pd.DataFrame:
         state_runs = single[state_key]["runs"] if state_key else [np.nan] * len(cpu_runs)
 
         for i, cpu in enumerate(cpu_runs):
+            cpu = np.asarray(cpu)
             overrun = overrun_runs[i]
             rows.append({
                 "device": path.parent.name,
@@ -40,7 +40,8 @@ def load_iterations(root: Path) -> pd.DataFrame:
                 "frames": len(cpu),
                 "p50_cpu_ms": np.percentile(cpu, 50),
                 "p90_cpu_ms": np.percentile(cpu, 90),
-                "jank_ratio": np.mean(np.asarray(overrun) > 0) if overrun is not None else np.nan,
+                "jank_ratio": np.mean(cpu > FRAME_BUDGET_MS),
+                "overrun_ratio": np.mean(np.asarray(overrun) > 0) if overrun is not None else np.nan,
                 "state_update_ms": state_runs[i],
             })
     return pd.DataFrame(rows)
@@ -82,6 +83,8 @@ def compare(df: pd.DataFrame) -> pd.DataFrame:
             mvi = group.loc[group.arch == "MVI", metric].dropna().to_numpy()
             if len(mvvm) < 3 or len(mvi) < 3:
                 continue
+            if np.ptp(np.concatenate([mvvm, mvi])) == 0:
+                continue
             low, high = welch_ci(mvi, mvvm)
             results.append({
                 "device": device, "scenario": scenario, "metric": metric,
@@ -104,6 +107,9 @@ def compare(df: pd.DataFrame) -> pd.DataFrame:
 if __name__ == "__main__":
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "results")
     iterations = load_iterations(root)
+    if iterations.empty:
+        sys.exit(f"Nenhum JSON válido encontrado em {root}/*/ "
+                 "(esperado: <aparelho>/<CENARIO>_<MVVM|MVI>_b<bloco>.json)")
     iterations.to_csv("iterations.csv", index=False)
     tests = compare(iterations)
     tests.to_csv("tests.csv", index=False)

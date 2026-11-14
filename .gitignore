@@ -1,16 +1,41 @@
+# ---------- Android / Gradle ----------
 *.iml
 .gradle
 /local.properties
+local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+# sessão do compilador Kotlin -----------
+.kotlin/
+ 
+# ---------- Sistema operacional ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+ 
+# ---------- Python ----------
 /analysis/.venv
+__pycache__/
+*.pyc
+/analysis/*.csv
+ 
+# ---------- Execuções de output de testes ----------
+
+/teste
+
+/piloto
+
+/*.json
+ 
+# ---------- Experimento ----------
+# /results  -> coleta oficial (run_experiment.sh)
+# /aa       -> teste A/A (aa_test.sh)
+ 
