@@ -1,3 +1,5 @@
+"""Análise do experimento MVVM vs MVI."""
+
 import json
 import re
 import sys
@@ -11,6 +13,8 @@ NAME = re.compile(r"(?P<scenario>S\d_[A-Z_]+)_(?P<arch>MVVM|MVI)_b(?P<block>\d+)
 METRICS = ["p90_cpu_ms", "p50_cpu_ms", "jank_ratio", "state_update_ms"]
 PRIMARY = "p90_cpu_ms"
 FRAME_BUDGET_MS = 1000 / 60
+EXCLUDED: list[dict] = []
+MIN_FRAMES_RATIO = 0.5
 
 
 def load_iterations(root: Path) -> pd.DataFrame:
@@ -30,6 +34,10 @@ def load_iterations(root: Path) -> pd.DataFrame:
 
         for i, cpu in enumerate(cpu_runs):
             cpu = np.asarray(cpu)
+            if cpu.size == 0:
+                EXCLUDED.append({"device": path.parent.name, "file": path.name, "iteration": i + 1,
+                                 "frames": 0, "reason": "sem quadros"})
+                continue
             overrun = overrun_runs[i]
             rows.append({
                 "device": path.parent.name,
@@ -37,6 +45,7 @@ def load_iterations(root: Path) -> pd.DataFrame:
                 "arch": match["arch"],
                 "block": int(match["block"]),
                 "iteration": i,
+                "file": path.name,
                 "frames": len(cpu),
                 "p50_cpu_ms": np.percentile(cpu, 50),
                 "p90_cpu_ms": np.percentile(cpu, 90),
@@ -110,6 +119,23 @@ if __name__ == "__main__":
     if iterations.empty:
         sys.exit(f"Nenhum JSON válido encontrado em {root}/*/ "
                  "(esperado: <aparelho>/<CENARIO>_<MVVM|MVI>_b<bloco>.json)")
+    median_frames = iterations.groupby(["device", "scenario", "arch"])["frames"].transform("median")
+    short = iterations["frames"] < MIN_FRAMES_RATIO * median_frames
+    for _, row in iterations[short].iterrows():
+        EXCLUDED.append({"device": row.device, "file": row.file, "iteration": row.iteration + 1,
+                         "frames": row.frames,
+                         "reason": f"menos da metade da mediana da condição ({median_frames[_]:.0f})"})
+    iterations_all = iterations.copy()
+    iterations_all["excluded"] = short
+    iterations = iterations[~short]
+    if EXCLUDED:
+        print("Iterações excluídas:")
+        for item in EXCLUDED:
+            print(f"  - {item['device']}/{item['file']}, iteração {item['iteration']}: "
+                  f"{item['frames']} quadros ({item['reason']})")
+        print()
+    pd.DataFrame(EXCLUDED).to_csv("excluded.csv", index=False)
+    iterations_all.to_csv("iterations_all.csv", index=False)
     iterations.to_csv("iterations.csv", index=False)
     tests = compare(iterations)
     tests.to_csv("tests.csv", index=False)
